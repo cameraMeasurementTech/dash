@@ -10,11 +10,25 @@ type EnvMap = Record<string, EnvConfig>;
 
 const RANK_FETCH_LIMIT = 256;
 
+const DEFAULT_REMOTE_BASE = "https://api.affine.io/api/v1";
+
+/**
+ * API base (no trailing slash).
+ *
+ * In **development**, defaults to same-origin `/api/v1` (Vite proxy → api.affine.io)
+ * so the browser does not call the API directly. Direct calls often return **403**
+ * from edge/WAF when Origin is http://LAN:5173. Set `VITE_API_BASE_URL` to override.
+ *
+ * Opt-in to direct API in dev only: `VITE_API_DIRECT=true` (when your network allows it).
+ */
 export function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (import.meta.env.DEV && import.meta.env.VITE_API_DIRECT === "true") {
+    return DEFAULT_REMOTE_BASE;
+  }
   if (import.meta.env.DEV) return "/api/v1";
-  return "https://api.affine.io/api/v1";
+  return DEFAULT_REMOTE_BASE;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {

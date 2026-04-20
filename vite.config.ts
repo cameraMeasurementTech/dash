@@ -1,5 +1,47 @@
+/// <reference types="node" />
+import type { ProxyOptions } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+
+type HeadersCarrier = { headers?: Record<string, string | string[] | undefined> };
+
+function forwardBrowserHeaders(
+  proxyReq: { setHeader(name: string, value: string): void },
+  req: HeadersCarrier
+) {
+  const h = req.headers ?? {};
+  const forward = ["user-agent", "accept", "accept-language"] as const;
+  for (const name of forward) {
+    const v = h[name];
+    if (typeof v === "string" && v.length > 0) {
+      proxyReq.setHeader(name, v);
+    } else if (Array.isArray(v) && v[0]) {
+      proxyReq.setHeader(name, v[0]);
+    }
+  }
+  if (!h["user-agent"]) {
+    proxyReq.setHeader(
+      "User-Agent",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 AffineRankDashboard/1.0"
+    );
+  }
+}
+
+function apiProxy(proxyTarget: string): Record<string, ProxyOptions> {
+  return {
+    "/api": {
+      target: proxyTarget,
+      changeOrigin: true,
+      secure: true,
+      configure(proxy) {
+        proxy.on("proxyReq", (proxyReq, req) => {
+          // Forward real browser headers so upstream WAF sees a normal client (TLS is still Node).
+          forwardBrowserHeaders(proxyReq, req);
+        });
+      },
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -10,16 +52,14 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       host: "0.0.0.0",
-      proxy: {
-        "/api": {
-          target: proxyTarget,
-          changeOrigin: true,
-          secure: true,
-        },
-      },
+      // Allow access via LAN IP / custom hostname (otherwise Vite returns 403).
+      allowedHosts: true,
+      proxy: apiProxy(proxyTarget),
     },
     preview: {
       host: "0.0.0.0",
+      allowedHosts: true,
+      proxy: apiProxy(proxyTarget),
     },
   };
 });

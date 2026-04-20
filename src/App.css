@@ -23,6 +23,26 @@
   color: #8b949e;
 }
 
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #c9d1d9;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input {
+  accent-color: #58a6ff;
+  cursor: pointer;
+}
+
+.filter-note {
+  color: #8b949e;
+  font-size: 0.8rem;
+}
+
 .banner {
   border: 1px solid #30363d;
   border-radius: 6px;
@@ -97,6 +117,58 @@
   vertical-align: middle;
 }
 
+.rank-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: normal;
+}
+
+.rank-table th.sortable:hover {
+  color: #e6edf3;
+  background: #161b22;
+}
+
+.rank-table th.score-col-header {
+  text-align: center;
+}
+
+.sort-indicator {
+  color: #58a6ff;
+  font-weight: 700;
+}
+
+.rank-table td.score-cell {
+  white-space: normal;
+  vertical-align: middle;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.score-cell-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.score-cell-value {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  width: 100%;
+}
+
+.score-sparkline-wrap {
+  width: 100%;
+  max-width: 6.5rem;
+  min-width: 3rem;
+  height: 28px;
+  margin-top: 0;
+  opacity: 0.92;
+}
+
 .rank-table th {
   background: #0d1117;
   color: #8b949e;
@@ -145,4 +217,18 @@
 .loading {
   color: #8b949e;
   font-size: 0.9rem;
+}
+
+.model-cell {
+  max-width: 14rem;
+}
+
+.model-link {
+  color: #79c0ff;
+  text-decoration: none;
+}
+
+.model-link:hover {
+  text-decoration: underline;
+  color: #a5d6ff;
 }
