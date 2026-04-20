@@ -29,6 +29,18 @@ function forwardBrowserHeaders(
 
 function apiProxy(proxyTarget: string): Record<string, ProxyOptions> {
   return {
+    // www.affine.io scores (must be registered before the generic `/api` rule).
+    "/affine-io": {
+      target: "https://www.affine.io",
+      changeOrigin: true,
+      secure: true,
+      rewrite: (path) => "/api/affine" + path.slice("/affine-io".length),
+      configure(proxy) {
+        proxy.on("proxyReq", (proxyReq, req) => {
+          forwardBrowserHeaders(proxyReq, req);
+        });
+      },
+    },
     "/api": {
       target: proxyTarget,
       changeOrigin: true,

@@ -1,8 +1,11 @@
-import { buildRowDisplay } from "./rankLogic";
+import {
+  buildChallengeColumnDisplay,
+  challengeMinerForDisplay,
+} from "./rankLogic";
 import type { RankedMiner } from "./types";
 
 export type SortColumn =
-  | { kind: "hotkey" }
+  | { kind: "rank" }
   | { kind: "uid" }
   | { kind: "model" }
   | { kind: "env"; env: string }
@@ -17,6 +20,13 @@ export type SortContext = {
   envNames: string[];
   dethroneCp: number;
   terminationM: number;
+  /**
+   * When non-null and non-empty: Status/CP/Challenge prefer v1 `challenge_info`
+   * (same as `af get-rank`). When null/empty: use each row’s own fields (www snapshot).
+   */
+  v1ChallengeMiners: RankedMiner[] | null;
+  /** False when public www scores omit `challenge_info` (Status/CP/Challenge are "—"). */
+  challengeInfoAvailable: boolean;
 };
 
 export function sameColumn(a: SortColumn, b: SortColumn): boolean {
@@ -28,6 +38,9 @@ export function sameColumn(a: SortColumn, b: SortColumn): boolean {
 /** First click direction: numeric / CP / UID high-first; text A→Z first. */
 function defaultDir(col: SortColumn): "asc" | "desc" {
   switch (col.kind) {
+    case "rank":
+      // Rank 1 is best; ascending shows 1, 2, 3… first.
+      return "asc";
     case "avg":
     case "env":
     case "cp":
@@ -55,9 +68,17 @@ function envRawScore(m: RankedMiner, env: string): number {
   return typeof s === "number" && Number.isFinite(s) ? s : -1;
 }
 
-function cpSortValue(m: RankedMiner): number {
-  if (m.isChampion) return Number.POSITIVE_INFINITY;
-  return m.checkpointsPassed;
+function cpSortValueChallenge(m: RankedMiner, ctx: SortContext): number {
+  if (!ctx.challengeInfoAvailable) return 0;
+  const c = challengeMinerForDisplay(m, ctx.v1ChallengeMiners);
+  if (c.isChampion) return Number.POSITIVE_INFINITY;
+  return c.checkpointsPassed;
+}
+
+/** Missing rank sorts after finite ranks when ascending. */
+function rankSortValue(m: RankedMiner): number {
+  if (typeof m.rank === "number" && Number.isFinite(m.rank)) return m.rank;
+  return Number.POSITIVE_INFINITY;
 }
 
 function comparePrimary(
@@ -69,8 +90,8 @@ function comparePrimary(
   switch (col.kind) {
     case "uid":
       return a.uid - b.uid;
-    case "hotkey":
-      return a.hotkey.localeCompare(b.hotkey);
+    case "rank":
+      return rankSortValue(a) - rankSortValue(b);
     case "model":
       return a.model.localeCompare(b.model);
     case "avg":
@@ -78,15 +99,43 @@ function comparePrimary(
     case "env":
       return envRawScore(a, col.env) - envRawScore(b, col.env);
     case "status": {
-      const ra = buildRowDisplay(a, ctx.envNames, ctx.dethroneCp, ctx.terminationM);
-      const rb = buildRowDisplay(b, ctx.envNames, ctx.dethroneCp, ctx.terminationM);
+      const ra = buildChallengeColumnDisplay(
+        a,
+        ctx.v1ChallengeMiners,
+        ctx.envNames,
+        ctx.dethroneCp,
+        ctx.terminationM,
+        ctx.challengeInfoAvailable
+      );
+      const rb = buildChallengeColumnDisplay(
+        b,
+        ctx.v1ChallengeMiners,
+        ctx.envNames,
+        ctx.dethroneCp,
+        ctx.terminationM,
+        ctx.challengeInfoAvailable
+      );
       return ra.statusStr.localeCompare(rb.statusStr);
     }
     case "cp":
-      return cpSortValue(a) - cpSortValue(b);
+      return cpSortValueChallenge(a, ctx) - cpSortValueChallenge(b, ctx);
     case "challenge": {
-      const ra = buildRowDisplay(a, ctx.envNames, ctx.dethroneCp, ctx.terminationM);
-      const rb = buildRowDisplay(b, ctx.envNames, ctx.dethroneCp, ctx.terminationM);
+      const ra = buildChallengeColumnDisplay(
+        a,
+        ctx.v1ChallengeMiners,
+        ctx.envNames,
+        ctx.dethroneCp,
+        ctx.terminationM,
+        ctx.challengeInfoAvailable
+      );
+      const rb = buildChallengeColumnDisplay(
+        b,
+        ctx.v1ChallengeMiners,
+        ctx.envNames,
+        ctx.dethroneCp,
+        ctx.terminationM,
+        ctx.challengeInfoAvailable
+      );
       return ra.challengeStr.localeCompare(rb.challengeStr);
     }
   }

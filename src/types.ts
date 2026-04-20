@@ -2,6 +2,8 @@ export interface EnvScore {
   score?: number;
   historical_count?: number;
   sample_count?: number;
+  /** 1 means full completeness for this env (UI highlights the cell). */
+  completeness?: number;
 }
 
 export interface ChallengeInfo {
@@ -18,6 +20,8 @@ export interface RawMinerScore {
   uid?: number;
   model?: string;
   average_score?: number;
+  rank?: number;
+  weight?: number;
   scores_by_env?: Record<string, EnvScore>;
   challenge_info?: ChallengeInfo;
 }
@@ -37,6 +41,8 @@ export interface WeightsLatestResponse {
 export type EnvConfig = {
   enabled_for_scoring?: boolean;
   display_name?: string;
+  /** From www system config — completeness must meet this to be “eligible”. */
+  min_completeness?: number;
   [key: string]: unknown;
 };
 
@@ -54,6 +60,8 @@ export interface ChampionState {
 export interface RankedMiner {
   uid: number;
   hotkey: string;
+  /** Leaderboard rank from API when present (1 = best). */
+  rank: number | null;
   model: string;
   scoresByEnv: Record<string, EnvScore>;
   averageScore: number;
