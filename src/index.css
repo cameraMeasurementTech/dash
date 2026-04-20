@@ -1,0 +1,24 @@
+:root {
+  color-scheme: dark;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  line-height: 1.45;
+  font-weight: 400;
+  color: #e6edf3;
+  background-color: #0d1117;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
